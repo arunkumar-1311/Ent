@@ -91,3 +91,24 @@ func (s *ShipmentService) DeleteShipment(
 
 	return nil
 }
+
+func (s *ShipmentService) ReindexShipments(
+    ctx context.Context,
+) (int, error) {
+    shipments, err := s.repository.GetAll(ctx)
+    if err != nil {
+        return 0, fmt.Errorf("load shipments for reindex: %w", err)
+    }
+
+    for _, shipment := range shipments {
+        if err := s.searchRepository.Index(ctx, shipment); err != nil {
+            return 0, fmt.Errorf(
+                "reindex shipment %d: %w",
+                shipment.ID,
+                err,
+            )
+        }
+    }
+
+    return len(shipments), nil
+}

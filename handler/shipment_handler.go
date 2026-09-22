@@ -51,6 +51,28 @@ func (h *ShipmentHandler) Search(c echo.Context) error {
 	return c.JSON(http.StatusOK, shipments)
 }
 
+func (h *ShipmentHandler) Reindex(c echo.Context) error {
+    count, err := h.service.ReindexShipments(
+        c.Request().Context(),
+    )
+    if err != nil {
+        return c.JSON(
+            http.StatusInternalServerError,
+            map[string]string{
+                "error": err.Error(),
+            },
+        )
+    }
+
+    return c.JSON(
+        http.StatusOK,
+        map[string]interface{}{
+            "message":        "shipments reindexed successfully",
+            "indexed_count": count,
+        },
+    )
+}
+
 func (h *ShipmentHandler) Create(c echo.Context) error {
 
 	var req model.CreateShipmentRequest

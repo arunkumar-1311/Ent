@@ -72,11 +72,12 @@ func main() {
 	// Routes
 	e.POST("/shipments", shipmentHandler.Create)
 	e.GET("/shipments", shipmentHandler.GetAll)
-	e.GET("/shipments/search", shipmentHandler.Search)
 	e.GET("/shipments/:id", shipmentHandler.GetByID)
 	e.PUT("/shipments/:id", shipmentHandler.Update)
 	e.DELETE("/shipments/:id", shipmentHandler.Delete)
 
+	e.GET("/shipments/search", shipmentHandler.Search)
+    e.POST("/shipments/reindex", shipmentHandler.Reindex)
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))
 }
