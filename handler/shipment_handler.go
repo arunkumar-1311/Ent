@@ -23,6 +23,34 @@ func NewShipmentHandler(
 	}
 }
 
+func (h *ShipmentHandler) Search(c echo.Context) error {
+	query := c.QueryParam("q")
+
+	if query == "" {
+		return c.JSON(
+			http.StatusBadRequest,
+			map[string]string{
+				"error": "search query is required",
+			},
+		)
+	}
+
+	shipments, err := h.service.SearchShipments(
+		c.Request().Context(),
+		query,
+	)
+	if err != nil {
+		return c.JSON(
+			http.StatusInternalServerError,
+			map[string]string{
+				"error": err.Error(),
+			},
+		)
+	}
+
+	return c.JSON(http.StatusOK, shipments)
+}
+
 func (h *ShipmentHandler) Create(c echo.Context) error {
 
 	var req model.CreateShipmentRequest
@@ -82,7 +110,6 @@ func (h *ShipmentHandler) GetByID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, shipment)
 }
-
 
 func (h *ShipmentHandler) GetAll(c echo.Context) error {
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -23,12 +24,41 @@ func main() {
 		log.Fatal("failed to create schema:", err)
 	}
 
+	// Elasticsearch
+	elasticsearchConfig := config.LoadElasticsearchConfig()
+
+	elasticsearchClient, err := config.NewElasticsearchClient(
+		elasticsearchConfig,
+	)
+	if err != nil {
+		log.Fatal("failed to create Elasticsearch client:", err)
+	}
+
+	elasticsearchContext, cancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+	defer cancel()
+
+	if err := config.EnsureShipmentIndex(
+		elasticsearchContext,
+		elasticsearchClient,
+		elasticsearchConfig.IndexName,
+	); err != nil {
+		log.Fatal("failed to initialize Elasticsearch index:", err)
+	}
+
 	// Repository
 	shipmentRepository := repository.NewShipmentRepository(client)
+	shipmentSearchRepository := repository.NewShipmentSearchRepository(
+		elasticsearchClient,
+		elasticsearchConfig.IndexName,
+	)
 
 	// Service
 	shipmentService := service.NewShipmentService(
 		shipmentRepository,
+		shipmentSearchRepository,
 	)
 
 	// Handler
@@ -42,6 +72,7 @@ func main() {
 	// Routes
 	e.POST("/shipments", shipmentHandler.Create)
 	e.GET("/shipments", shipmentHandler.GetAll)
+	e.GET("/shipments/search", shipmentHandler.Search)
 	e.GET("/shipments/:id", shipmentHandler.GetByID)
 	e.PUT("/shipments/:id", shipmentHandler.Update)
 	e.DELETE("/shipments/:id", shipmentHandler.Delete)
